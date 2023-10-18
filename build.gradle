@@ -1,0 +1,105 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.7.6'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = maven_group
+
+version = '0.0.1'
+if (build_number != 'undefined') {
+    version += "+build.${build_number}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+static String starter(value) {
+    return "org.springframework.boot:spring-boot-starter-$value"
+}
+
+String easypoi(model) {
+    return "cn.afterturn:easypoi-${model}:${easypoi_version}"
+}
+
+dependencies {
+    testImplementation starter('test')
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    implementation starter('web')
+    implementation starter('security')
+    implementation starter('data-redis')
+    implementation starter('validation')
+    implementation "org.apache.commons:commons-pool2:${pool2_version}"
+    implementation "mysql:mysql-connector-java:${connector_version}"
+//    implementation "com.github.pagehelper:pagehelper-spring-boot-starter:${pagehelper_version}" // mybatis plus yyds
+    implementation "com.github.oshi:oshi-core:${oshi_version}"
+    implementation "com.alibaba.fastjson2:fastjson2:${fastjson2_version}"
+    implementation "com.google.code.gson:gson:${gson_version}"
+    implementation "io.jsonwebtoken:jjwt:${jwt_version}"
+//    implementation "com.github.jeffreyning:mybatisplus-plus:${mpp_version}" // 多主键mpp
+    implementation "com.baomidou:mybatis-plus-boot-starter:${mybatis_plus_version}"
+    implementation "com.baomidou:mybatis-plus-extension:${mybatis_plus_version}"
+    implementation "cn.hutool:hutool-all:${hutool_version}"
+    implementation("org.springframework.cloud:spring-cloud-starter-openfeign:${feign_version}") {
+        exclude module: 'commons-fileupload'
+    }
+    //noinspection VulnerableLibrariesLocal
+    implementation "commons-fileupload:commons-fileupload:${file_upload_version}"
+    implementation "io.github.openfeign:feign-okhttp:${feign_okhttp_version}"
+    implementation "commons-io:commons-io:${commons_version}"
+    implementation easypoi('base')
+    implementation easypoi('web')
+    implementation easypoi('annotation')
+    implementation "org.xhtmlrenderer:flying-saucer-pdf-itext5:${saucer_version}"
+    implementation "org.freemarker:freemarker:${freemarker_version}"
+    compileOnly "org.projectlombok:lombok:${lombok_version}"
+    testCompileOnly "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+processResources {
+    exclude 'application-config-product.yml'
+    exclude 'template/**'
+}
+
+bootJar {
+    exclude 'application-config.yml'
+    if (!file("build/libs/application-config.yml").exists()) {
+        copy {
+            from 'src/main/resources'
+            into 'build/libs'
+            include 'application-config-product.yml'
+            rename {
+                'application-config.yml'
+            }
+        }
+    }
+}
+
+jar {
+    exclude 'application-config.yml'
+    if (!file("build/libs/application-config.yml").exists()) {
+        copy {
+            from 'src/main/resources'
+            into 'build/libs'
+            include 'application-config-product.yml'
+            rename {
+                'application-config.yml'
+            }
+        }
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    graph.getAllTasks().each { task ->
+        if (task.path =~ /:build/) {
+            test.enabled false
+        }
+    }
+}
